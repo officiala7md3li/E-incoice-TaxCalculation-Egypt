@@ -52,10 +52,12 @@ decimal baseAmount = 100m;
 var builder = new TaxCalculationEngineBuilder();
 
 // Configure tax strategies
-builder.WithStrategy(TaxTypeEnum.VAT, TaxStrategyFactory.CreateStrategy(TaxTypeEnum.VAT, 0.14m));
-builder.WithStrategy(TaxTypeEnum.ServiceTax, TaxStrategyFactory.CreateStrategy(TaxTypeEnum.ServiceTax, 0.05m));
-builder.WithStrategy(TaxTypeEnum.EntertainmentTax, TaxStrategyFactory.CreateStrategy(TaxTypeEnum.EntertainmentTax, 0.07m));
-builder.WithStrategy(TaxTypeEnum.OtherFees, TaxStrategyFactory.CreateStrategy(TaxTypeEnum.OtherFees, 0.10m));
+builder.WithStrategy(TaxTypeEnum.V009, 0.14m);
+builder.WithStrategy(TaxTypeEnum.Tbl01, 0.05m);
+builder.WithStrategy(TaxTypeEnum.Tbl02, 10m);
+builder.WithStrategy(TaxTypeEnum.W001, 0.01m);
+builder.WithStrategy(TaxTypeEnum.ST01, 0.05m);
+builder.WithStrategy(TaxTypeEnum.ST02, 6m);
 
 // Build the engine and calculate taxes
 TaxCalculationEngine engine = builder.Build();
