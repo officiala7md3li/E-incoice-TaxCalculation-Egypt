@@ -199,11 +199,11 @@ public class TaxCalculationEngineTests
     [MemberData(nameof(GetTestCases))]
     public void TestTaxCalculation(decimal baseAmount, List<TaxTypeEnum> taxTypes, List<decimal> taxValues, decimal expectedTotal)
     {
-        // Arrange: Build the engine with the provided strategies.
+        // Arrange: Build the engine with the provided strategies using simplified syntax.
         var builder = new TaxCalculationEngineBuilder();
         for (int i = 0; i < taxTypes.Count; i++)
         {
-            builder.WithStrategy(taxTypes[i], TaxStrategyFactory.CreateStrategy(taxTypes[i], taxValues[i]));
+            builder.WithStrategy(taxTypes[i], taxValues[i]);
         }
         TaxCalculationEngine engine = builder.Build();
 

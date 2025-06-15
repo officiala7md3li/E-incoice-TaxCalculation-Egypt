@@ -14,27 +14,26 @@ namespace TaxCalculation.Services
         {
             // Calculate the taxes using your engine
             var computedTaxes = engine.CalculateTaxes(baseAmount);
-
-            // For each computed tax, retrieve its static metadata and determine its group.
-            var categorizedTaxes = computedTaxes.Select(ct =>
+            
+            // Pre-allocate the result list with known capacity
+            var categorizedTaxes = new List<TaxesCategoriezed>(computedTaxes.Count);
+            
+            // Use a more efficient approach with foreach instead of LINQ
+            foreach (var ct in computedTaxes)
             {
-                // Convert the enum to a string (to match the repository's Code property)
                 string taxCode = ct.Key.ToString();
-
-                // Retrieve the corresponding metadata from the static repository
                 var metadata = TaxMetadataRepository.GetByCode(taxCode);
-
-                return new TaxesCategoriezed
+                
+                categorizedTaxes.Add(new TaxesCategoriezed
                 {
-                    // Use the extension method to get the TaxTypeGroup
                     TaxtypeReference = ct.Key.GetTaxTypeGroup(),
                     TaxTypeEnum = ct.Key,
                     EnglisghDescription = metadata?.Desc_en ?? "No description",
                     ArabicDescription = metadata?.Desc_ar ?? "No description",
-                    Amount=ct.Value,
-                };
-            }).ToList();
-
+                    Amount = ct.Value,
+                });
+            }
+            
             return categorizedTaxes;
         }
     }

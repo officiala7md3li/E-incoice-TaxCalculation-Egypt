@@ -29,7 +29,11 @@ namespace TaxCalculation.Strategies
 
         public decimal Calculate(decimal baseAmount, IReadOnlyDictionary<TaxTypeEnum, decimal> computedTaxes)
         {
-            // If dependencies exist, add their computed values to the base amount.
+            // If no dependencies, avoid the loop entirely
+            if (DependentTaxes.Count() == 0)
+                return baseAmount * _rate * (_isDeduction ? -1 : 1);
+            
+            // Calculate effective base with optimized dependency lookup
             decimal effectiveBase = baseAmount;
             foreach (var dep in DependentTaxes)
             {
@@ -38,8 +42,8 @@ namespace TaxCalculation.Strategies
                     effectiveBase += depValue;
                 }
             }
-            decimal taxAmount = effectiveBase * _rate;
-            return _isDeduction ? -taxAmount : taxAmount;
+            
+            return effectiveBase * _rate * (_isDeduction ? -1 : 1);
         }
     }
 }

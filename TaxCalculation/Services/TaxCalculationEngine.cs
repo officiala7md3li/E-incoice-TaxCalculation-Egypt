@@ -16,13 +16,21 @@ namespace TaxCalculation.Services
     public class TaxCalculationEngine
     {
         private readonly IDictionary<TaxTypeEnum, ITaxCalculationStrategy> _strategies;
-        public TaxCalculationEngine(IDictionary<TaxTypeEnum, ITaxCalculationStrategy> strategies) => _strategies = strategies;
+        private List<TaxTypeEnum> _cachedSortedTaxTypes;
+
+        public TaxCalculationEngine(IDictionary<TaxTypeEnum, ITaxCalculationStrategy> strategies)
+        {
+            _strategies = strategies;
+            // Pre-compute the topological sort once
+            _cachedSortedTaxTypes = TopologicallySort(_strategies);
+        }
 
         public IDictionary<TaxTypeEnum, decimal> CalculateTaxes(decimal baseAmount)
         {
-            var computedTaxes = new Dictionary<TaxTypeEnum, decimal>();
-            var orderedTaxTypes = TopologicallySort(_strategies);
-            foreach (var taxType in orderedTaxTypes)
+            // Pre-allocate dictionary with known capacity to avoid resizing
+            var computedTaxes = new Dictionary<TaxTypeEnum, decimal>(_cachedSortedTaxTypes.Count);
+            
+            foreach (var taxType in _cachedSortedTaxTypes)
             {
                 var strategy = _strategies[taxType];
                 computedTaxes[taxType] = strategy.Calculate(baseAmount, computedTaxes);
@@ -33,11 +41,15 @@ namespace TaxCalculation.Services
         // A simple topological sort to ensure dependencies are computed first.
         private List<TaxTypeEnum> TopologicallySort(IDictionary<TaxTypeEnum, ITaxCalculationStrategy> strategies)
         {
-            var sorted = new List<TaxTypeEnum>();
-            var visited = new Dictionary<TaxTypeEnum, bool>();
+            var sorted = new List<TaxTypeEnum>(strategies.Count); // Pre-allocate capacity
+            var visited = new Dictionary<TaxTypeEnum, bool>(strategies.Count);
+            
             foreach (var taxType in strategies.Keys)
             {
-                Visit(taxType, strategies, visited, sorted);
+                if (!visited.ContainsKey(taxType))
+                {
+                    Visit(taxType, strategies, visited, sorted);
+                }
             }
             return sorted;
         }
@@ -51,15 +63,18 @@ namespace TaxCalculation.Services
                     throw new Exception("Cyclic dependency detected");
                 return;
             }
+            
             visited[taxType] = true;
-            foreach (var dep in strategies[taxType].DependentTaxes)
+            
+            var strategy = strategies[taxType];
+            foreach (var dep in strategy.DependentTaxes)
             {
-                if (strategies.ContainsKey(dep))
+                if (strategies.ContainsKey(dep) && !sorted.Contains(dep))
                     Visit(dep, strategies, visited, sorted);
             }
+            
             visited[taxType] = false;
-            if (!sorted.Contains(taxType))
-                sorted.Add(taxType);
+            sorted.Add(taxType);
         }
     }
 
